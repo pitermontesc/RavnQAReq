@@ -7,7 +7,7 @@ export class JobDetailsPage {
         return this.page.locator('h1, h2').first();
     }
 
-    // Accept common variants
+    // Accept common variants 
     private headerCandidates(): Locator {
         const patterns = [
             'Minimum Requirements',

@@ -25,9 +25,8 @@ test.describe('Ravn QA Engineer job - Minimum Requirements extraction', () => {
 
             await expect(jobDetailsPage.jobTitle()).toBeVisible();
             const titleText = (await jobDetailsPage.jobTitle().innerText()).trim();
-            // Soft assert: it should at least contain "QA" or "Quality" and "Engineer"
+            //  assert: it should at least contain "QA" or "Quality" and "Engineer"
             //expect.soft(/\b(qa|quality|assurance)\b/i.test(titleText)).toBeTruthy();
-
         });
 
         let requirements: string[] = [];

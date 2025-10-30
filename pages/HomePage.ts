@@ -5,7 +5,6 @@ export class HomePage {
 
     async goto() {
         await this.page.goto('/', { waitUntil: 'domcontentloaded' });
-
         // Accept cookie/consent dialogs if present (best-effort).
         const consentButtons = this.page.locator(
             'button:has-text("Accept"), button:has-text("I agree"), button[aria-label*="accept" i]'

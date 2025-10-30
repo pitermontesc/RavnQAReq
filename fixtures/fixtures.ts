@@ -5,6 +5,7 @@ import { JobDetailsPage } from '../pages/JobDetailsPage';
 
 type Fixtures = {
     homePage: HomePage;
+
     jobsPage: JobsPage;
     jobDetailsPage: JobDetailsPage;
 };
