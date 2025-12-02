@@ -27,4 +27,31 @@ export class JobDetailsPage {
 
         return requirements;
     }
+    async getSectionItemsByHeader(headerText: string): Promise<string[]> {
+        return this.page.evaluate((headerText) => {
+            const regex = new RegExp(headerText, 'i');
+            const headers = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+            const header = headers.find((h) => regex.test(h.textContent || ''));
+            if (!header) return [];
+            const items: string[] = [];
+            let el = header.nextElementSibling;
+            while (el) {
+                if (/^H[1-6]$/.test(el.tagName)) break;
+                el.querySelectorAll('li').forEach((li) => {
+                    const text = li.textContent?.trim();
+                    if (text) items.push(text);
+                });
+                el = el.nextElementSibling;
+            }
+            return items;
+        }, headerText);
+    }
+    async getMinimumRequirements(): Promise<string[]> {
+        const requirements = await this.getSectionItemsByHeader('Minimum Requirements');
+        if (requirements.length === 0) {
+            // fallback for “Requirements” / “Qualifications”
+            return this.getSectionItemsByHeader('Requirements');
+        }
+        return requirements;
+    }
 }

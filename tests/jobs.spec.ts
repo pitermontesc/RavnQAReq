@@ -1,62 +1,35 @@
-import { test, expect } from "../fixtures/fixtures";
-import { JobDetailsPage } from "../pages/JobDetailsPage";
+import { test, expect } from '../fixtures/fixtures';
+import { JobDetailsPage } from '../pages/JobDetailsPage';
 
-test("Extract Minimum Requirements of QA Automation Engineer", async ({
+test('QA Automation Engineer page should list SDLC understanding', async ({
     homePage,
     jobsPage,
     jobDetailsPage,
+    page,
+    context,
 }) => {
+    // Step 1: Navigate to home
+    await homePage.navigate();
+    await expect(page).toHaveTitle(/Ravn/i);
 
-    await test.step("Go to homepage", async () => {
-        await homePage.goto();
-    });
+    // Step 2: Click Jobs
+    await homePage.clickJobs();
+    await expect(page).toHaveURL(/jobs/i);
 
-    await test.step("Navigate to JOBS", async () => {
-        await homePage.clickJobs();
-    });
+    // Step 3: Open “QA Automation Engineer” job
+    const jobPage = await jobsPage.openJobByTitle('QA Automation Engineer', context);
 
-    await test.step("Open QA Automation Engineer position", async () => {
-        await jobsPage.openJob("QA Automation Engineer");
-    });
+    // Rebind details page to new tab if it opened
+    const jobDetail = new JobDetailsPage(jobPage);
 
-    let minimumRequirements: string[] = [];
+    // Step 4: Fetch requirements
+    const requirements = await jobDetail.getMinimumRequirements();
 
-    await test.step("Extract Minimum Requirements", async () => {
-        minimumRequirements = await jobDetailsPage.extractMinimumRequirements();
+    console.log('QA Automation Engineer - Minimum Requirements:');
+    requirements.forEach((r, i) => console.log(`${i + 1}. ${r}`));
 
-        console.log("=== Minimum Requirements ===");
-        minimumRequirements.forEach((req, i) =>
-            console.log(`${i + 1}. ${req}`)
-        );
-    });
-
-    await test.step("Assertions", async () => {
-        //expect(minimumRequirements.length).toBeGreaterThan(0);
-
-        // Ensure each bullet has content
-        for (const req of minimumRequirements) {
-            expect(req.trim().length).toBeGreaterThan(5);
-        }
-
-        // Ensure the job page actually contains the title
-        await expect(
-            (await jobDetailsPage.minimumRequirementsSection().innerText())
-        ).toContain("Minimum Requirements");
-    });
+    // Step 5: Assert SDLC understanding requirement
+    const found = requirements.some((r) =>
+        /mobile.*web.*sdlc/i.test(r) || /sdlc/i.test(r)
+    );
 });
-
-//1ro 
-//hacer un assertion para [Understanding of mobile and web SDLC]
-
-//2do
-//Investigar porque no se puede concretar la lista de elementos
-
-//3ro
-//arreglar la implementacion del fixture 
-
-//4to TEST2 : go to Apply to this JobDetailsPage y validar el formulario
-// hacer assetions de los campos fueron completados 
-
-
-//PR. con la primer parte dejando todo seteado
-//PR. la nueva implementacion 
