@@ -1,50 +1,34 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator, expect } from "@playwright/test";
 
 export class JobsPage {
     constructor(private page: Page) { }
 
-    jobCardByTitleRegex(title: RegExp): Locator {
-        const link = this.page.getByRole('link', { name: title });
-        const heading = this.page.locator('h1,h2,h3,h4').filter({ hasText: title });
-        return link.or(heading).or(this.page.locator('a, article, div').filter({ hasText: title })).first();
+    getJobCard(title: string): Locator {
+        // Looks inside their job listing container
+        return this.page.locator("//button[h4[contains(text(),'" + title + "')]]"); ////button[h4[contains(text(),'QA Automation')]]
     }
 
-    async assertJobsListVisible() {
-        const possibleJobs = this.page.locator(
-            'a:has-text("Engineer"), a:has-text("Developer"), a:has-text("QA"), [href*="job"], [href*="position"]'
-        );
-        const count = await possibleJobs.count();
-        expect(count).toBeGreaterThan(0);
+    async openJob(title: string) {
+        await this.getJobCard(title).click({ timeout: 10000 });
+        //await expect(jobCard).toBeVisible({ timeout: 10000 });
+        //await jobCard.click();
     }
 
-    async openJobByTitle(titleRegex: RegExp) {
-        const card = this.jobCardByTitleRegex(titleRegex);
-        await expect(card, `Job card matching ${titleRegex} should be visible`).toBeVisible();
 
-        // If there’s a link inside, remove target=_blank so it opens in the same tab.
-        const innerLink = card.locator('a').first();
-        if (await innerLink.isVisible().catch(() => false)) {
-            try {
-                await innerLink.evaluate((a: HTMLAnchorElement) => a.removeAttribute('target'));
-            } catch { /* ignore if not an anchor or cross-origin blocks */ }
-            await innerLink.click();
-        } else {
-            // If the card itself is a link, try to remove target there too
-            try {
-                await card.evaluate((el: Element) => {
-                    if ((el as HTMLAnchorElement).removeAttribute) {
-                        (el as HTMLAnchorElement).removeAttribute('target');
-                    }
-                });
-            } catch { /* ignore */ }
-            await card.click();
-        }
+    private jobLink = (title: string) =>
+        this.page.locator("//button[h4[contains(text(),'" + title + "')]]");
 
-        await this.page.waitForLoadState('domcontentloaded');
-    }
+    async openJobByTitle(title: string, context: BrowserContext): Promise<Page> {
+        const link = this.jobLink(title).first();
+        await expect(link).toBeVisible({ timeout: 15000 });
 
-    /** Allow tests to grab the active page after possible popup */
-    getActivePage(): Page {
-        return this.page;
+        const [maybeNewPage] = await Promise.all([
+            context.waitForEvent('page').catch(() => null),
+            link.click({ force: true }),
+        ]);
+
+        const target = maybeNewPage ?? this.page;
+        await target.waitForLoadState('domcontentloaded');
+        return target;
     }
 }

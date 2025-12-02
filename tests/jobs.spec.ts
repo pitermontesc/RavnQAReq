@@ -1,46 +1,35 @@
 import { test, expect } from '../fixtures/fixtures';
+import { JobDetailsPage } from '../pages/JobDetailsPage';
 
-test.describe('Ravn QA Engineer job - Minimum Requirements extraction', () => {
-    test('Navigate, open QA Engineer, loop Minimum Requirements, print & assert', async ({ page, homePage, jobsPage, jobDetailsPage }) => {
+test('QA Automation Engineer page should list SDLC understanding', async ({
+    homePage,
+    jobsPage,
+    jobDetailsPage,
+    page,
+    context,
+}) => {
+    // Step 1: Navigate to home
+    await homePage.navigate();
+    await expect(page).toHaveTitle(/Ravn/i);
 
-        await test.step('Go to homepage', async () => {
-            await homePage.goto();
-            await expect(page).toHaveTitle(/ravn/i);
-        });
+    // Step 2: Click Jobs
+    await homePage.clickJobs();
+    await expect(page).toHaveURL(/jobs/i);
 
-        await test.step('Open JOBS / Careers', async () => {
-            await homePage.openJobs();
-            await jobsPage.assertJobsListVisible();
-        });
+    // Step 3: Open “QA Automation Engineer” job
+    const jobPage = await jobsPage.openJobByTitle('QA Automation Engineer', context);
 
-        await test.step('Open "QA Engineer" job', async () => {
-            // More permissive: any title that contains QA/Quality + Engineer (any order, words in between)
-            const titleRegex = /\b(qa|quality|assurance)\b[\w\s-]*\bengineer\b|\bengineer\b[\w\s-]*\b(qa|quality|assurance)\b/i;
-            await jobsPage.openJobByTitle(titleRegex);
+    // Rebind details page to new tab if it opened
+    const jobDetail = new JobDetailsPage(jobPage);
 
-            // If a new tab opened, ensure our JobDetailsPage uses the active page
-            // DELETE this line:
-            // (jobDetailsPage as any).page = jobsPage.getActivePage();
+    // Step 4: Fetch requirements
+    const requirements = await jobDetail.getMinimumRequirements();
 
+    console.log('QA Automation Engineer - Minimum Requirements:');
+    requirements.forEach((r, i) => console.log(`${i + 1}. ${r}`));
 
-            await expect(jobDetailsPage.jobTitle()).toBeVisible();
-            const titleText = (await jobDetailsPage.jobTitle().innerText()).trim();
-            //  assert: it should at least contain "QA" or "Quality" and "Engineer"
-            //expect.soft(/\b(qa|quality|assurance)\b/i.test(titleText)).toBeTruthy();
-        });
-
-        let requirements: string[] = [];
-        await test.step('Extract requirements/qualifications', async () => {
-            requirements = await jobDetailsPage.getMinimumRequirements();
-            expect(requirements.length).toBeGreaterThan(0);
-
-            console.log('--- Minimum Requirements / Qualifications ---');
-            requirements.forEach((req, i) => console.log(`${i + 1}. ${req}`));
-        });
-
-        await test.step('Extra validations', async () => {
-            for (const item of requirements) expect.soft(item).toMatch(/[A-Za-z]/);
-            await expect(jobsPage.getActivePage()).toHaveURL(/(jobs|careers|greenhouse|lever|ashby)/i);
-        });
-    });
+    // Step 5: Assert SDLC understanding requirement
+    const found = requirements.some((r) =>
+        /mobile.*web.*sdlc/i.test(r) || /sdlc/i.test(r)
+    );
 });

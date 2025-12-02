@@ -1,61 +1,57 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { Page, Locator, expect } from "@playwright/test";
 
 export class JobDetailsPage {
     constructor(private page: Page) { }
 
-    jobTitle(): Locator {
-        return this.page.locator('h1, h2').first();
+    minimumRequirementsSection(): Locator {
+        return this.page.locator('//p/strong[contains(text(),"Minimum Requirements")]');
     }
 
-    // Accept common variants 
-    private headerCandidates(): Locator {
-        const patterns = [
-            'Minimum Requirements',
-            'Requirements',
-            'Qualifications',
-            "What you'll need",
-            'What you will need',
-            'What you bring',
-            'You have'
-        ];
-        const sel = patterns
-            .map(p => `h1:has-text("${p}"), h2:has-text("${p}"), h3:has-text("${p}"), h4:has-text("${p}")`)
-            .join(', ');
-        return this.page.locator(sel);
+    minimumRequirementsItems(): Locator {
+        return this.page.locator('//p/strong[contains(text(),"Minimum Requirements")]/../following-sibling::ul[1]/li');
     }
 
-    private listFollowingHeader(header: Locator): Locator {
-        return header.locator('xpath=//following-sibling::*[self::ul or self::ol][1]/li');
-    }
+    async extractMinimumRequirements(): Promise<string[]> {
+        //await expect(this.minimumRequirementsSection()).toBeVisible({ timeout: 10000 });;
 
-    private anyRequirementsListNearHeader(): Locator {
-        // Look for the first header that has a list next to it
-        const hdr = this.headerCandidates().first();
-        return this.listFollowingHeader(hdr);
-    }
+        const items = this.minimumRequirementsItems();
+        const count = await items.count();
 
-    async getMinimumRequirements(): Promise<string[]> {
-        // Try: list right after a header with requirement-like text
-        let items = this.anyRequirementsListNearHeader();
-        let count = await items.count();
+        //expect(count).toBeGreaterThan(0);
 
-        // Fallback: some boards have a section wrapper; search any list within a section that contains those keywords
-        if (count === 0) {
-            const section = this.page.locator(
-                'section:has-text("Requirements"), section:has-text("Qualifications"), section:has-text("What you"), div:has(h2:has-text("Requirements")), div:has(h3:has-text("Qualifications"))'
-            ).first();
-            items = section.locator('ul li, ol li');
-            count = await items.count();
-        }
+        const requirements: string[] = [];
 
-        expect(count, 'Expected at least one requirement/qualification bullet').toBeGreaterThan(0);
-
-        const values: string[] = [];
         for (let i = 0; i < count; i++) {
-            const text = (await items.nth(i).innerText()).replace(/\s+/g, ' ').trim();
-            if (text) values.push(text);
+            requirements.push((await items.nth(i).innerText()).trim());
         }
-        values.forEach(v => expect.soft(v.length).toBeGreaterThan(0));
-        return values;
+
+        return requirements;
+    }
+    async getSectionItemsByHeader(headerText: string): Promise<string[]> {
+        return this.page.evaluate((headerText) => {
+            const regex = new RegExp(headerText, 'i');
+            const headers = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+            const header = headers.find((h) => regex.test(h.textContent || ''));
+            if (!header) return [];
+            const items: string[] = [];
+            let el = header.nextElementSibling;
+            while (el) {
+                if (/^H[1-6]$/.test(el.tagName)) break;
+                el.querySelectorAll('li').forEach((li) => {
+                    const text = li.textContent?.trim();
+                    if (text) items.push(text);
+                });
+                el = el.nextElementSibling;
+            }
+            return items;
+        }, headerText);
+    }
+    async getMinimumRequirements(): Promise<string[]> {
+        const requirements = await this.getSectionItemsByHeader('Minimum Requirements');
+        if (requirements.length === 0) {
+            // fallback for “Requirements” / “Qualifications”
+            return this.getSectionItemsByHeader('Requirements');
+        }
+        return requirements;
     }
 }

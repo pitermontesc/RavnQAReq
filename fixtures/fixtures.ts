@@ -3,14 +3,13 @@ import { HomePage } from '../pages/HomePage';
 import { JobsPage } from '../pages/JobsPage';
 import { JobDetailsPage } from '../pages/JobDetailsPage';
 
-type Fixtures = {
+type PagesFixture = {
     homePage: HomePage;
-
     jobsPage: JobsPage;
     jobDetailsPage: JobDetailsPage;
 };
 
-export const test = base.extend<Fixtures>({
+export const test = base.extend<PagesFixture>({
     homePage: async ({ page }, use) => {
         await use(new HomePage(page));
     },
