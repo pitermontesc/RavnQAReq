@@ -6,7 +6,9 @@ export class JobDetailsPage {
     minimumRequirementsSection(): Locator {
         return this.page.locator('//p/strong[contains(text(),"Minimum Requirements")]');
     }
-
+    reqList(): Locator {
+        return this.page.locator("(//p)[14]//following-sibling::ul[1]/li");
+    }
     minimumRequirementsItems(): Locator {
         return this.page.locator('//p/strong[contains(text(),"Minimum Requirements")]/../following-sibling::ul[1]/li');
     }
@@ -53,5 +55,14 @@ export class JobDetailsPage {
             return this.getSectionItemsByHeader('Requirements');
         }
         return requirements;
+    }
+
+    async minReqPrint() {
+        const count = await this.reqList.count();
+        console.log(`Minimun requirementes amount: ${count}`);
+        const texts = await this.reqList.allInnerTexts();
+        for (const [index, text] of texts.entries()) {
+            console.log(`Minimun requirements: ${index + 1}: ${text}`);
+        }
     }
 }
