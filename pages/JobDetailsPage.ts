@@ -13,6 +13,19 @@ export class JobDetailsPage {
         return this.page.locator('//p/strong[contains(text(),"Minimum Requirements")]/../following-sibling::ul[1]/li');
     }
 
+    applyButton(): Locator {
+        return this.page.locator('text=/Apply( this job)?/i').first();
+    }
+
+    async scrollToBottom() {
+        await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    }
+
+    async clickApply(): Promise<void> {
+        await expect(this.applyButton()).toBeVisible({ timeout: 15000 });
+        await this.applyButton.click();
+    }
+
     async extractMinimumRequirements(): Promise<string[]> {
         //await expect(this.minimumRequirementsSection()).toBeVisible({ timeout: 10000 });;
 

@@ -22,7 +22,7 @@ test.describe('Ravn Jobs – QA Automation Engineer', () => {
     test('QA Automation Engineer page should list SDLC understanding', async ({
         homePage,
         jobsPage,
-        jobDetailsPage,
+        makeJobDetailsPage,
         page,
         context,
     }) => {
@@ -51,6 +51,58 @@ test.describe('Ravn Jobs – QA Automation Engineer', () => {
             /mobile.*web.*sdlc/i.test(r) || /sdlc/i.test(r)
         );
         console.log('Encontrado' + found);
+    });
+
+    test('Open QA Automation Engineer -> Apply -> fill required fields (no submit) and validate filled', async ({
+        homePage,
+        openJob,
+        makeApplyPage,
+        context,
+        page,
+    }) => {
+        // go to Jobs
+        await homePage.clickJobs();
+        await expect(page).toHaveURL(/jobs/i);
+
+        // open job details (handles new tab internally)
+        const details = await openJob('QA Automation Engineer');
+
+        // scroll bottom + click Apply
+        await details.scrollToBottom();
+
+        const [maybeApplyTab] = await Promise.all([
+            context.waitForEvent('page').catch(() => null),
+            details.clickApply(),
+        ]);
+
+        const applyTab = maybeApplyTab ?? page;
+        await applyTab.waitForLoadState('domcontentloaded');
+
+        const apply = makeApplyPage(applyTab);
+
+        const formData = {
+            firstName: 'Piter',
+            lastName: 'Montes',
+            email: `piter.montes+${Date.now()}@example.com`,
+            phone: '5551234567',
+            country: 'United States',        // adjust if needed
+            city: 'Miami',
+            yearsOfExperience: '3-5 years',  // adjust to match dropdown option label
+            resumeRelativePath: 'tests/resources/resume.txt',
+        };
+
+        // fill (do NOT click submit)
+        await apply.fillRequiredFields(formData);
+
+        // validate filled
+        await apply.assertRequiredFieldsFilled(formData);
+
+        // extra guard: confirm we didn't submit
+        await expect(applyTab).not.toHaveURL(/thank|submitted|confirmation/i);
+
+        // optional: ensure submit button exists but is not pressed
+        const submitBtn = applyTab.getByRole('button', { name: /submit/i });
+        await expect(submitBtn).toBeVisible();
     });
 });
 
