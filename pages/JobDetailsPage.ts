@@ -6,9 +6,24 @@ export class JobDetailsPage {
     minimumRequirementsSection(): Locator {
         return this.page.locator('//p/strong[contains(text(),"Minimum Requirements")]');
     }
-
+    reqList(): Locator {
+        return this.page.locator("(//p)[14]//following-sibling::ul[1]/li");
+    }
     minimumRequirementsItems(): Locator {
         return this.page.locator('//p/strong[contains(text(),"Minimum Requirements")]/../following-sibling::ul[1]/li');
+    }
+
+    applyButton(): Locator {
+        return this.page.locator('//button[contains(text(),"Apply to this job")]').first();
+    }
+
+    async scrollToBottom() {
+        await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    }
+
+    async clickApply(): Promise<void> {
+        await expect(this.applyButton()).toBeVisible({ timeout: 15000 });
+        await this.applyButton().click();
     }
 
     async extractMinimumRequirements(): Promise<string[]> {
@@ -47,11 +62,19 @@ export class JobDetailsPage {
         }, headerText);
     }
     async getMinimumRequirements(): Promise<string[]> {
-        const requirements = await this.getSectionItemsByHeader('Minimum Requirements');
-        if (requirements.length === 0) {
-            // fallback for “Requirements” / “Qualifications”
-            return this.getSectionItemsByHeader('Requirements');
+        for (const label of ['Minimum Requirements', 'Requirements', 'Qualifications']) {
+            const items = await this.getSectionItemsByHeader(label);
+            if (items.length) return items;
         }
-        return requirements;
+        return [];
     }
+
+    // async minReqPrint() {
+    //     const count = await this.reqList.count();
+    //     console.log(`Minimun requirementes amount: ${count}`);
+    //     const texts = await this.reqList.allInnerTexts();
+    //     for (const [index, text] of texts.entries()) {
+    //         console.log(`Minimun requirements: ${index + 1}: ${text}`);
+    //     }
+    // }
 }

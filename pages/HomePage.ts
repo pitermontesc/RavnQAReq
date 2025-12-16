@@ -18,10 +18,4 @@ export class HomePage {
         await this.page.locator('//a[@href="/jobs/"]').first().click();
         await expect(this.page).toHaveURL(/\/jobs/);
     }
-
-    // async clickJobs() {
-    //     await this.page.locator(this.jobsLink).click();
-    // }
-
-
 }
