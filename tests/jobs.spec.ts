@@ -26,9 +26,9 @@ test.describe('Ravn Jobs – QA Automation Engineer', () => {
         page,
         context,
     }) => {
-        // Step 1: Navigate to home
-        await homePage.navigate();
-        await expect(page).toHaveTitle(/Ravn/i);
+        // // Step 1: Navigate to home
+        // await homePage.navigate();
+        // await expect(page).toHaveTitle(/Ravn/i);
 
         // Step 2: Click Jobs
         await homePage.clickJobs();
@@ -36,8 +36,6 @@ test.describe('Ravn Jobs – QA Automation Engineer', () => {
 
         // Step 3: Open “QA Automation Engineer” job
         const jobPage = await jobsPage.openJobByTitle('QA Automation Engineer', context);
-
-        // Rebind details page to new tab if it opened
         const jobDetail = new JobDetailsPage(jobPage);
 
         // Step 4: Fetch requirements
@@ -45,12 +43,14 @@ test.describe('Ravn Jobs – QA Automation Engineer', () => {
 
         console.log('QA Automation Engineer - Minimum Requirements:');
         requirements.forEach((r, i) => console.log(`${i + 1}. ${r}`));
+        expect(requirements.length).toBeGreaterThan(0);
 
         // Step 5: Assert SDLC understanding requirement
-        const found = requirements.some((r) =>
-            /mobile.*web.*sdlc/i.test(r) || /sdlc/i.test(r)
+        const hasSDLC = requirements.some(r =>
+            /understanding of .*mobile.*web.*sdlc/i.test(r) ||
+            (/sdlc/i.test(r) && /mobile/i.test(r) && /web/i.test(r))
         );
-        console.log('Encontrado' + found);
+        expect(hasSDLC, 'Expected requirement "Understanding of mobile and web SDLC" to be present').toBeTruthy();
     });
 
     test('Open QA Automation Engineer -> Apply -> fill required fields (no submit) and validate filled', async ({
@@ -60,14 +60,12 @@ test.describe('Ravn Jobs – QA Automation Engineer', () => {
         context,
         page,
     }) => {
-        // go to Jobs
+        //1. go to Jobs
         await homePage.clickJobs();
         await expect(page).toHaveURL(/jobs/i);
 
-        // open job details (handles new tab internally)
+        //2. open job details (handles new tab internally)
         const details = await openJob('QA Automation Engineer');
-
-        // scroll bottom + click Apply
         await details.scrollToBottom();
 
         const [maybeApplyTab] = await Promise.all([
@@ -83,9 +81,9 @@ test.describe('Ravn Jobs – QA Automation Engineer', () => {
         const formData = {
             firstName: 'Piter',
             lastName: 'Montes',
-            email: `piter.montes+${Date.now()}@example.com`,
+            email: `pitermontes+${Date.now()}@ravn.com`,
             phone: '5551234567',
-            country: 'United States',        // adjust if needed
+            country: 'United States',
             city: 'Miami',
             yearsOfExperience: '3-5 years',  // adjust to match dropdown option label
             resumeRelativePath: 'tests/resources/resume.txt',

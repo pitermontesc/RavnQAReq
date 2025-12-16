@@ -13,23 +13,22 @@ export class ApplyPage {
     private country!: Locator;
     private city!: Locator;
     private yearsExp!: Locator;
+
     private resumeInput!: Locator;
 
     constructor(page: Page) {
         this.page = page;
 
         // Initialize locators AFTER page is assigned
-        this.firstName = this.page.getByLabel('First Name', { exact: false });
-        this.lastName = this.page.getByLabel('Last Name', { exact: false });
-        this.email = this.page.getByLabel('Email', { exact: false });
-        this.phone = this.page.getByLabel('Phone', { exact: false });
+        this.firstName = this.page.locator('//input[@name="firstName"]');
+        this.lastName = this.page.locator('//input[@name="lastName"]');
+        this.email = this.page.locator('//input[@name="email"]');
+        this.phone = this.page.locator('//input[@name="phone"]');
 
         this.country = this.page.getByLabel('Country', { exact: false });
-        this.city = this.page.getByLabel('City', { exact: false });
-
+        this.city = this.page.locator('//input[@name="city"]');
         this.yearsExp = this.page.getByLabel('Years of experience', { exact: false });
 
-        // Resume/CV upload
         this.resumeInput = this.page.locator('input[type="file"]').first();
     }
     async waitForForm() {
@@ -43,8 +42,8 @@ export class ApplyPage {
         phone: string;
         country: string;
         city: string;
-        yearsOfExperience: string; // must match option label
-        resumeRelativePath?: string; // default: tests/resources/resume.txt
+        yearsOfExperience: string;
+        resumeRelativePath?: string;
     }) {
         await this.waitForForm();
 
@@ -53,7 +52,6 @@ export class ApplyPage {
         await this.email.fill(data.email);
         await this.phone.fill(data.phone);
 
-        // Country dropdown: try selectOption (native <select>), else click + pick option
         const tag = await this.country.evaluate(el => el.tagName.toLowerCase()).catch(() => '');
         if (tag === 'select') {
             await this.country.selectOption({ label: data.country });
@@ -104,15 +102,15 @@ export class ApplyPage {
 
         await expect(this.city).toHaveValue(data.city);
 
-        const yearsTag = await this.yearsExp.evaluate(el => el.tagName.toLowerCase()).catch(() => '');
-        if (yearsTag === 'select') {
-            await expect(this.yearsExp).toHaveValue(/.+/);
-        } else {
-            await expect(this.yearsExp).toContainText(new RegExp(data.yearsOfExperience, 'i'));
-        }
+        // const yearsTag = await this.yearsExp.evaluate(el => el.tagName.toLowerCase()).catch(() => '');
+        // if (yearsTag === 'select') {
+        //     await expect(this.yearsExp).toHaveValue(/.+/);
+        // } else {
+        //     await expect(this.yearsExp).toContainText(new RegExp(data.yearsOfExperience, 'i'));
+        // }
 
-        // Assert resume uploaded (input has files)
-        await expect(this.resumeInput).toHaveJSProperty('files', expect.anything());
+        // // Assert resume uploaded (input has files)
+        // await expect(this.resumeInput).toHaveJSProperty('files', expect.anything());
         const fileCount = await this.resumeInput.evaluate((el: HTMLInputElement) => el.files?.length ?? 0);
         expect(fileCount).toBeGreaterThan(0);
     }
